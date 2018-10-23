@@ -36,7 +36,13 @@ export default class ClusteredMapView extends PureComponent {
     this.mapRef = this.mapRef.bind(this)
     this.onClusterPress = this.onClusterPress.bind(this)
     this.onRegionChangeComplete = this.onRegionChangeComplete.bind(this)
+    this.onMapReady = this.onMapReady.bind(this)
   }
+
+  onMapReady(){
+    return this.props.getBaseRef(this.mapview);
+  }
+
 
   componentDidMount() {
     this.clusterize(this.props.data)
@@ -84,6 +90,10 @@ export default class ClusteredMapView extends PureComponent {
     let data
     if (region.longitudeDelta <= 80) {
       data = this.getClusters(region)
+      data.forEach((item) => {
+        item.zoom = region.zoom;
+      })
+
       this.setState({ region, data }, () => {
         this.props.onRegionChangeComplete && this.props.onRegionChangeComplete(region, data)
       })
@@ -125,6 +135,7 @@ export default class ClusteredMapView extends PureComponent {
       <MapView
         { ...this.props}
         ref={this.mapRef}
+        onMapReady={this.onMapReady}
         onRegionChangeComplete={this.onRegionChangeComplete}>
         {
           this.props.clusteringEnabled && this.state.data.map((d) => {
@@ -138,7 +149,7 @@ export default class ClusteredMapView extends PureComponent {
                 textStyle={this.props.textStyle}
                 scaleUpRatio={this.props.scaleUpRatio}
                 renderCluster={this.props.renderCluster}
-                key={`cluster-${d.properties.cluster_id}`}
+                key={`cluster-${d.zoom}-${d.properties.cluster_id}`}
                 containerStyle={this.props.containerStyle}
                 clusterInitialFontSize={this.props.clusterInitialFontSize}
                 clusterInitialDimension={this.props.clusterInitialDimension} />
@@ -187,6 +198,7 @@ ClusteredMapView.propTypes = {
   // array
   data: PropTypes.array.isRequired,
   // func
+  getBaseRef:PropTypes.func,
   onExplode: PropTypes.func,
   onImplode: PropTypes.func,
   scaleUpRatio: PropTypes.func,
